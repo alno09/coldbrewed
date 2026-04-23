@@ -79,6 +79,10 @@ export type NewBrewItemInput = {
   notes?: string;
 };
 
+export type BrewItemUpdateInput = {
+  id: number;
+} & NewBrewItemInput;
+
 const toBatch = (row: BatchRow): Batch => ({
   id: row.id,
   name: row.name,
@@ -258,4 +262,80 @@ export const getBrewItemsByBatchId = (batchId: number): BrewItem[] => {
   );
 
   return rows.map(toBrewItem);
+};
+
+export const updateBatchMethodGroup = (batchId: number, methodGroup: string) => {
+  initDB();
+
+  try {
+    db.runSync('UPDATE batches SET method_group = ? WHERE id = ?', [
+      methodGroup.trim(),
+      batchId,
+    ]);
+
+    return { success: true as const };
+  } catch (error) {
+    console.error('Failed to update batch method group:', error);
+    return { success: false as const, error };
+  }
+};
+
+export const updateBrewItem = (item: BrewItemUpdateInput) => {
+  initDB();
+
+  try {
+    const normalizedItem = normalizeBrewItemInput(item);
+
+    db.runSync(
+      `UPDATE brew_items
+      SET label = ?, duration = ?, harvest_time = ?, fragrance = ?, acidity = ?, sweetness = ?, mouthfeel = ?, aftertaste = ?, total_score = ?, notes = ?
+      WHERE id = ?`,
+      [
+        normalizedItem.label,
+        normalizedItem.duration,
+        normalizedItem.harvestTime,
+        normalizedItem.fragrance,
+        normalizedItem.acidity,
+        normalizedItem.sweetness,
+        normalizedItem.mouthfeel,
+        normalizedItem.aftertaste,
+        normalizedItem.totalScore,
+        normalizedItem.notes,
+        item.id,
+      ]
+    );
+
+    return { success: true as const };
+  } catch (error) {
+    console.error('Failed to update brew item:', error);
+    return { success: false as const, error };
+  }
+};
+
+export const deleteBrewItem = (itemId: number) => {
+  initDB();
+
+  try {
+    db.runSync('DELETE FROM brew_items WHERE id = ?', [itemId]);
+    return { success: true as const };
+  } catch (error) {
+    console.error('Failed to delete brew item:', error);
+    return { success: false as const, error };
+  }
+};
+
+export const deleteBatch = (batchId: number) => {
+  initDB();
+
+  try {
+    db.withTransactionSync(() => {
+      db.runSync('DELETE FROM brew_items WHERE batch_id = ?', [batchId]);
+      db.runSync('DELETE FROM batches WHERE id = ?', [batchId]);
+    });
+
+    return { success: true as const };
+  } catch (error) {
+    console.error('Failed to delete batch:', error);
+    return { success: false as const, error };
+  }
 };
