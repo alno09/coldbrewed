@@ -2,7 +2,9 @@
   "expo": {
     "name": "coldbrewed",
     "slug": "coldbrewed",
+    "scheme": "coldbrewed",
     "version": "1.0.0",
+    "plugins": ["expo-router"],
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
